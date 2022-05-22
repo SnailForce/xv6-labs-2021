@@ -95,3 +95,31 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_trace(void)
+{
+  int mask;
+  if(argint(0, &mask) < 0)
+    return -1;
+  struct proc *p = myproc();
+  p->trace_mask = mask;
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  // 获取用户态传入的sysinfo结构体
+  uint64 addr;
+  struct proc *p = myproc();
+  struct sysinfo info;
+  info.nproc = acquire_nproc();
+  info.freemem = acquire_freemem();
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  // 将内核态中的info复制到用户态
+  if(copyout(p->pagetable, addr, (char *)&info, sizeof(info)) < 0)
+    return -1;
+  return 0;
+}
